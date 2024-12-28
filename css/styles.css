@@ -1,0 +1,72 @@
+/* reset css */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+
+/* accordion styles */
+.accordion {
+  max-width: 100%;
+  /* Set a maximum width for the accordion */
+  margin: 0 auto;
+  /* Center the accordion */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* Add a subtle shadow */
+  border-radius: 8px;
+  /* Round the corners */
+  overflow: hidden;
+  /* Prevent elements from overflowing */
+  background-color: #f8f9fa;
+  /* Light background color */
+}
+
+.accordion-item {
+  border: none;
+  /* Remove default borders */
+}
+
+.accordion-button {
+  background-color: #fff;
+  /* White background for buttons */
+  border-bottom: 1px solid #ddd;
+  /* Light border between items */
+  font-weight: bold;
+  /* Make the button text bold */
+  padding: 5px;
+  /* Add some padding */
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  /* Remove focus outline */
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e9ecef;
+  /* Slightly darker background for expanded items */
+}
+
+.accordion-body {
+  background-color: #fff;
+  /* White background for the body */
+  padding: 15px;
+  /* Add padding inside the body */
+  color: #333;
+  /* Darker text color */
+}
+
+.accordion-collapse {
+  transition: height 0.3s ease;
+  /* Change duration here */
+}
