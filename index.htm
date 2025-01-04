@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,11 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Excel to Accordion</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- <link href="css/styles.css" rel="stylesheet"> -->
+  <link href="css/styles.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
+    /* move styles to css file!!! (in progress...) */
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 515px;
+      margin: 2px auto;
+      padding: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    header,
+    footer {
+      text-align: center;
+    }
+
+    header img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    footer img {
+      padding-top: 10px;
+      max-width: 100%;
+      height: auto;
+    }
+
+
+
     .square {
       display: inline-flex;
       width: 100px;
@@ -34,7 +69,7 @@
     #reset-button {
       padding: 2px 16px;
       font-size: 12px;
-      line-height: 1;
+      line-height: 0.8;
       border-radius: 6px;
       margin-top: 5px;
     }
@@ -42,33 +77,43 @@
     .reset-container {
       display: flex;
       justify-content: center;
-      margin-top: 6px;
+      margin-top: 4px;
     }
   </style>
 </head>
 
 <body>
-  <div class="container mt-4">
-    <h1>Excel to Accordion</h1>
-    <input type="file" id="file-input" accept=".xlsx, .xls" />
+  <!-- main container -->
+  <div class="main-container">
+    <header>
+      <img src="images/header.png" alt="Header Image">
+    </header>
 
-    <!-- filters/inputs -->
-    <div class="filter-container">
-      <select class="form-select form-select-sm" aria-label=".form-select-sm example">
-        <option selected>Filter by Country</option>
-      </select>
-      <input class="form-control form-control-sm" list="datalistOptions" id="exampleDataList"
-        placeholder="Search by name...">
-      <datalist id="datalistOptions"></datalist>
+    <div class="container mt-4">
+      <h1></h1>
+      <input type="file" id="file-input" accept=".xlsx, .xls" />
+
+      <!-- filters/inputs -->
+      <div class="filter-container">
+        <select class="form-select form-select-sm" aria-label=".form-select-sm example">
+          <option selected>Filter by Country</option>
+        </select>
+        <input class="form-control form-control-sm" list="datalistOptions" id="exampleDataList"
+          placeholder="Search by name...">
+        <datalist id="datalistOptions"></datalist>
+      </div>
+
+      <!-- reset -->
+      <div class="reset-container">
+        <button class="btn btn-secondary btn-sm" id="reset-button">Reset</button>
+      </div>
+
+      <div class="accordion accordion-flush mt-4" id="accordionFlushExample"></div>
     </div>
-
-    <!-- reset -->
-    <div class="reset-container">
-      <button class="btn btn-secondary btn-sm" id="reset-button">Reset</button>
-    </div>
-
-    <div class="accordion accordion-flush mt-4" id="accordionFlushExample"></div>
-  </div>
+    <footer>
+      <img src="images/footer.png" alt="Footer Image">
+    </footer>
+  </div><!-- main-container -->
 
 
   <script>
@@ -133,7 +178,7 @@
 
 
       /* ###### Create country dropdown ###### */
-      function createCountryDropdown(countries) { //pass uniqueCountries
+      function setCountryDropdown(countries) { //pass uniqueCountries
         const countrySelect = $('.form-select').empty();//empty <select>
         //add default option
         countrySelect.append('<option selected>Filter by Country</option>');
@@ -150,7 +195,7 @@
 
 
       /* ###### Create snakes datalist ###### */
-      function populateDatalist(snakes) { //pass snake names
+      function setDatalist(snakes) { //pass snake names
         //empty datalist(in case of previous data)
         const datalist = $('#datalistOptions').empty();
         snakes.sort(); //sort snake names alphabetically
@@ -164,40 +209,89 @@
       /* ###### Process excel data ###### */
       function processExcelData(data) {
         //columns to exclude
-        const excludedColumns = ["species#", "Caption", "ImageFileName", "ImageType", "VentralColor", "VentralPattern"];
-        snakesData = {}; //reset data(in case of previous data)
+        const excludedColumns = ["species#", "ImageFileName", "ImageType", "ScaleType", "Nape", "Pattern", "VentralColor", "VentralPattern", "HeadColorDistinct", "Caption"];
+        snakesData = {}; //reset data (in case of previous data)
 
-        data.forEach(row => { //loop through...
-          //if species exists, convert to string and trim. else, return empty string
+        data.forEach(row => { //loop through rows
+          //if species exists, convert to string and trim, else return empty string
           let species = row["Species"] ? row["Species"].toString().trim() : "";
-          //skips if species is empty or null(NULL)
+          //skip if species is empty or null ("null")
           if (!species || species.toLowerCase() === "null") return;
           //if species not in snakesData, add it
           snakesData[species] = snakesData[species] || {};
-          //$.each works with both arrays and objects
-          $.each(row, function (key, value) { //loop through key-value pairs...
-            //...skip if:
-            //value is empty or null
-            //column is "Species" (already handled)
-            //column is in the excludedColumns array
-            //calue is "null"
+
+          //skip if color is empty or null ("null")
+          if (!row["Color"] || row["Color"].toLowerCase() === "null") return;
+
+          // variable to storr additional information
+          let additionalInfo = "";
+          //check if additional info exists and not "null" before adding to additionalInfo
+          if (row["Caption"] && row["Caption"].toLowerCase() !== "null") {
+            additionalInfo += `<strong>Caption:</strong> ${row["Caption"]}`;
+          }
+          //check id data not null and exists... 
+          if (row["HeadColorDistinct"] && row["HeadColorDistinct"].toLowerCase() !== "null") {
+            //...add to additionalInfo (true) use | to separate (false) use empty string
+            additionalInfo += `${additionalInfo ? ' | ' : ''}<strong>HeadColor:</strong> ${row["HeadColorDistinct"]}`;
+          }
+          //same as above
+          if (row["ScaleType"] && row["ScaleType"].toLowerCase() !== "null") {
+            additionalInfo += `${additionalInfo ? ' | ' : ''}<strong>Scale:</strong> ${row["ScaleType"]}`;
+          }
+          if (row["Nape"] && row["Nape"].toLowerCase() !== "null") {
+            additionalInfo += `${additionalInfo ? ' | ' : ''}<strong>Nape:</strong> ${row["Nape"]}`;
+          }
+          if (row["Pattern"] && row["Pattern"].toLowerCase() !== "null") {
+            additionalInfo += `${additionalInfo ? ' | ' : ''}<strong>Pattern:</strong> ${row["Pattern"]}`;
+          }
+          //yep, still the same...
+          if (row["VentralColor"] && row["VentralColor"].toLowerCase() !== "null") {
+            additionalInfo += `${additionalInfo ? ' | ' : ''}<strong>VentralColor:</strong> ${row["VentralColor"]}`;
+          }
+          //and the last one...
+          if (row["VentralPattern"] && row["VentralPattern"].toLowerCase() !== "null") {
+            additionalInfo += `${additionalInfo ? ' | ' : ''}<strong>VentralPattern:</strong> ${row["VentralPattern"]}`;
+          }
+
+          //add additionalInfo to the Color column or display "No info"
+          if (additionalInfo) {
+            row["Color"] = `${row["Color"]} (<span style='font-size: 1rem;'>${additionalInfo}</span>)`;
+          }
+          else {
+            row["Color"] = `${row["Color"]} (<span style='font-size: 1rem;'>No info</span>)`;
+          }
+
+
+          /* ###### eluminate duplicates block ###### */
+
+          //loop through each row keys/values
+          $.each(row, function (key, value) {
+            //skip if:
+            //value null or empty
+            //column is "Species"
+            //column is in excludedColumns array
+            //value is "null"
             if (!value || key === "Species" || excludedColumns.includes(key) || value.toLowerCase() === "null") return;
 
             const trimmedValue = value.toString().trim();
-            const group = snakesData[species][key] = snakesData[species][key] || [];
+            const group = snakesData[species][key] = snakesData[species][key] || [];//
             if (!group.includes(trimmedValue)) group.push(trimmedValue);
 
             // Object.entries: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
           });
         });
+
         const uniqueCountries = getUniqueCountries(data); //get unique countries
-        createCountryDropdown(uniqueCountries); //create country dropdown
-        const snakeNames = Object.keys(snakesData); //crate datalist with snake names
-        populateDatalist(snakeNames); //create datalist(snakeNames)
+        setCountryDropdown(uniqueCountries); //country dropdown
+        const snakeNames = Object.keys(snakesData); // Create datalist with snake names
+        setDatalist(snakeNames); //snake names datalist
         displayAccordion(snakesData); //show data in accordion
         filterByCountry(snakesData); //show/hide accordion items based on country
-        filterBySnakeName(snakesData); //show/hide accordion items based on snakeName
+        filterBySnakeName(snakesData); //show/hide accordion items based on snake name
+
+        // Object.entries: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
       }
+
 
 
       /* ###### Display accordion ###### */
@@ -221,9 +315,11 @@
               </h2>
               <div id="${accordionId}" class="accordion-collapse collapse" aria-labelledby="${headerId}" data-bs-parent="#accordionFlushExample">
                 <div class="accordion-body">
-                  <div class="square">IMG_1</div>
-                  <div class="square">IMG_2</div>
-                  <div class="square">IMG_3</div>
+                  <div style="display: flex; justify-content: center; gap: 10px;">
+                    <div class="square">IMG_1</div>
+                    <div class="square">IMG_2</div>
+                    <div class="square">IMG_3</div>
+                  </div>
                   ${generateDetailsList(details)}
                 </div>
               </div>
@@ -243,34 +339,90 @@
       /* ###### Generate details list ###### */
       function generateDetailsList(details) {
         let html = "";
-        $.each(details, function (key, values) { //
+
+        //loop through each key/value
+        $.each(details, function (key, values) {
           //format values
           const formattedValues = values.map(value => {
-            //split by comma, trim and capitalize first letter
+            //split by comma, trim
             const items = value.split(",").map(item => item.trim());
             const cleanedItems = items.map(item => {
-              const words = item.split(" ").map(word => { //split by space
-                if (word.startsWith("(")) { //if word starts with "("...
+              //split by space to read each word
+              const words = item.split(" ").map(word => {
+                if (word.startsWith("(")) {//if word starts with "("...
                   //...capitalize second letter and convert the rest to lowercase
                   return `(${word.charAt(1).toUpperCase()}${word.slice(2).toLowerCase()}`;
                 }
-                //capitalize first letter and convert the rest to lowercase
+                //otherwise, capitalize first letter and convert the rest to lowercase
                 return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
               });
-              return words.join(" "); //join by space
+              return words.join(" ");//join words using space
             });
-            return cleanedItems.join(", "); //join by comma
+            return cleanedItems.join(", ");//join with comma
+
+            // String.split(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split
+            // Array.map(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+
           });
 
-          // If key is "Coder (Name)", separate with ", "
-          //Otherwise, separate with "<strong> / </strong>" (fatty slash)
-          const separator = key === "Coder (Name)" ? ", " : "<strong> / </strong>";
-          html += `<div><strong>${key}:</strong> ${formattedValues.join(separator)}</div>`;
-        });
-        return html; //return completed html
+          //if key = color
+          if (key === "Color") {
+            //add header for color variations
+            html += `<div style='text-align: center; font-weight: bold; margin-bottom: 10px;'>Color Variations:</div>`;
+            //shows first 3 colors(lines)...
+            const initialColors = formattedValues.slice(0, 3).map(value => `<div>${value}</div>`).join("<hr>");
+            //...and the rest(lines)
+            const additionalColors = formattedValues.slice(3).map(value => `<div>${value}</div>`).join("<hr>");
 
-        // Array.prototype.map(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+            if (formattedValues.length > 3) {
+              //toggle button(colors)
+              html += `
+                    <div class="color-details">
+                        ${initialColors}
+                        <div class="additional-colors" style="display: none;">
+                            ${additionalColors}
+                        </div>
+                        <button class="btn btn-link toggle-more">Show More</button>
+                    </div>
+                `;
+            }
+            else { //hides button if > 3 colors
+              html += `<div class="color-details">${initialColors}</div>`;
+            }
+          }
+          else {
+            //if/else for codee name
+            let separator;
+            if (key === "Coder (Name)") {
+              separator = ", ";
+            }
+            else {
+              separator = "<strong> | </strong>";
+            }
+            html += `<div><strong>${key}:</strong> ${formattedValues.join(separator)}</div>`;
+          }
+        });
+
+        return html; //completed HTML
       }
+      /* ###### Generate details list(toggle) ######*/
+      $(document).on("click", ".toggle-more", function () {
+        //get closest element ("color-details")
+        const parent = $(this).closest(".color-details");
+        //if additional colors are visible...
+        const additionalSection = parent.find(".additional-colors");
+        const isVisible = additionalSection.is(":visible");
+
+        additionalSection.toggle(); //toggle additional colors
+        $(this).text(isVisible ? "Show More" : "Show Less"); //change button text
+
+        // jQuery.closest(): https://api.jquery.com/closest/
+        // jQuery.find(): https://api.jquery.com/find/
+        // jQuery.toggle(): https://api.jquery.com/toggle/
+        // jQuery.text(): https://api.jquery.com/text/
+        // :visible Selector: https://api.jquery.com/visible-selector/
+        // this vs $(this): https://www.geeksforgeeks.org/difference-between-this-and-this-in-jquery/
+      });
 
 
       /* ###### Filter by country ###### */
@@ -334,7 +486,8 @@
             const species = $(this).find('.accordion-header button').text().trim().toLowerCase();
             if (species === selectedSnake) {
               $(this).show();
-            } else {
+            }
+            else {
               $(this).hide();
             }
           });
@@ -347,6 +500,8 @@
         $('#exampleDataList').val(''); //clear datalist input
         $('.form-select').val('Filter by Country'); //reset select dropdown
         $('#accordionFlushExample').children().show(); //show all accordion items
+        //close all(open) accordion items
+        $('#accordionFlushExample .accordion-collapse').removeClass('show');
       });
     });
 

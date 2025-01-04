@@ -18,17 +18,12 @@ ul {
 /* accordion styles */
 .accordion {
   max-width: 100%;
-  /* Set a maximum width for the accordion */
-  margin: 0 auto;
-  /* Center the accordion */
+  margin: 0 auto; /* centers */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  /* Add a subtle shadow */
   border-radius: 8px;
-  /* Round the corners */
   overflow: hidden;
-  /* Prevent elements from overflowing */
+  /* prevent elements from overflowing */
   background-color: #f8f9fa;
-  /* Light background color */
 }
 
 .accordion-item {
@@ -37,14 +32,10 @@ ul {
 }
 
 .accordion-button {
-  background-color: #fff;
-  /* White background for buttons */
-  border-bottom: 1px solid #ddd;
-  /* Light border between items */
+  background-color: #ffffff;
+  border-bottom: 1px solid #198754;
   font-weight: bold;
-  /* Make the button text bold */
   padding: 5px;
-  /* Add some padding */
 }
 
 .accordion-button:focus {
@@ -54,19 +45,39 @@ ul {
 
 .accordion-button:not(.collapsed) {
   background-color: #e9ecef;
-  /* Slightly darker background for expanded items */
+  /* darker background for expanded items */
 }
 
 .accordion-body {
   background-color: #fff;
-  /* White background for the body */
   padding: 15px;
-  /* Add padding inside the body */
   color: #333;
-  /* Darker text color */
+  /* text color */
 }
 
 .accordion-collapse {
   transition: height 0.3s ease;
-  /* Change duration here */
+  /* colaps duration */
+}
+
+hr {
+  margin: 0.5rem 0;
+  color: #198754;
+  border: 0;
+  border-top: var(--bs-border-width) solid;
+  opacity: .25;
+}
+
+.btn-link {
+  font-size: small;
+  font-weight: bold;
+  color: #198754;
+  text-decoration: none;
+}
+
+.btn-link:hover,
+.btn-link:focus,
+.btn-link:active {
+  color: #198754;
+  text-decoration: none;
 }
