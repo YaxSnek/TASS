@@ -4,103 +4,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TASS</title>
+  <title>Excel to Accordion</title>
+  <!--google fonts-->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
+  <!-- bootstrap css -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- custom css -->
   <link href="css/styles.css" rel="stylesheet">
+  <!-- jquery and xlsx -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-  <style>
-    /* move styles to css file!!! (in progress...) */
-    body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-    }
-
-    .main-container {
-      width: 100%;
-      max-width: 515px;
-      margin: 2px auto;
-      padding: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      border-radius: 4px;
-    }
-
-    header,
-    footer {
-      text-align: center;
-    }
-
-    header img {
-      max-width: 100%;
-      height: auto;
-    }
-
-    footer img {
-      padding-top: 10px;
-      max-width: 100%;
-      height: auto;
-    }
-
-
-
-    .square {
-      display: inline-flex;
-      width: 100px;
-      height: 100px;
-      background: #98d2fd;
-      text-align: center;
-      justify-content: center;
-    }
-
-    .accordion-body {
-      padding: 5px;
-    }
-
-    .filter-container {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-      margin-top: 10px;
-    }
-
-    #reset-button {
-      padding: 2px 16px;
-      font-size: 12px;
-      line-height: 0.8;
-      border-radius: 6px;
-      margin-top: 5px;
-    }
-
-    .reset-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 4px;
-    }
-  </style>
 </head>
 
 <body>
   <!-- main container -->
   <div class="main-container">
     <header>
-      <img src="docs/assets/header.png" alt="Header Image">
+      <img src="images/header.png" alt="Header Image">
     </header>
 
     <div class="container mt-4">
       <h1></h1>
-      <input type="file" id="file-input" accept=".xlsx, .xls" />
+      <!-- <input type="file" id="file-input" accept=".xlsx, .xls" /> -->
 
       <!-- filters/inputs -->
       <div class="filter-container">
-        <select class="form-select form-select-sm" aria-label=".form-select-sm example">
-          <option selected>Filter by Country</option>
-        </select>
+
         <input class="form-control form-control-sm" list="datalistOptions" id="exampleDataList"
           placeholder="Search by name...">
         <datalist id="datalistOptions"></datalist>
+
+        <select class="form-select form-select-sm country-select" aria-label=".form-select-sm example">
+          <option selected>Filter by Country</option>
+        </select>
+
+        <!-- color dropdowns -->
+        <div class="color-select-container">
+          <select id="color1" class="form-select form-select-sm" aria-label="First Color Filter">
+            <option selected>Filter by Color 1</option>
+          </select>
+          <select id="color2" class="form-select form-select-sm" aria-label="Second Color Filter">
+            <option selected>Filter by Color 2</option>
+          </select>
+        </div>
       </div>
 
       <!-- reset -->
@@ -108,102 +58,35 @@
         <button class="btn btn-secondary btn-sm" id="reset-button">Reset</button>
       </div>
 
-      <div class="accordion accordion-flush mt-4" id="accordionFlushExample"></div>
+      <div class="accordion accordion-flush mt-4" id="accordionFlushExample">
+        <!-- accordion items will be displayed here -->
+      </div>
     </div>
     <footer>
-      <img src="docs/assets/footer.png" alt="Footer Image">
+      <img src="images/footer.png" alt="Footer Image">
     </footer>
-  </div><!-- main-container -->
+  </div><!-- main-container(end) -->
 
+  <script src="script/get-values.js"></script>
+  <script src="script/gen-detalist.js"></script>
+  <script src="script/filters-by.js"></script>
+  <script src="script/set-colors.js"></script>
 
+  <!-- main script -->
   <script>
     $(document).ready(function () { //when document is ready the fun begins
 
+      /* ###### Load data from JSON ###### */
+      let snakesData = {}; //data storage
+      // let uniqueColors = [];
 
-      /* ###### Load data from excel file ###### */
-      let snakesData = {}; //store processed data
+      $.getJSON('11snakes.json', function (jsonData) {//load JSON
+        processExcelData(jsonData); //call func to process JSON data
 
-      //file input event
-      $('#file-input').on('change', function (event) {
-        const file = event.target.files[0]; //get first file
-        if (!file) return; //stop if no file selected
 
-        const reader = new FileReader(); //create a new file reader
-
-        reader.onload = function (e) {
-          //convert data to binary list
-          const data = new Uint8Array(e.target.result);
-          //read excel file
-          const workbook = XLSX.read(data, { type: 'array' });
-          //get first sheet name
-          const sheetName = workbook.SheetNames[0];
-          //access the sheet
-          const sheet = workbook.Sheets[sheetName];
-          //convert sheet to JSON
-          const jsonData = XLSX.utils.sheet_to_json(sheet);
-          //and... pass data to the func
-          processExcelData(jsonData);
-        };
-        //read file as array buffer
-        reader.readAsArrayBuffer(file);
-
-        // FileReader API: https://developer.mozilla.org/en-US/docs/Web/API/FileReader
-        // SheetJS (xlsx library) documentation: https://github.com/SheetJS/sheetjs
-        // ArrayBuffer: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-        // SheetJS utility for sheet-to-JSON conversion: https://docs.sheetjs.com/docs/api/utilities/#sheet_to_json
+      }).fail(function () {
+        console.error('Failed to load JSON file.');//
       });
-
-
-      /* ###### Get unique countries from data ###### */
-      function getUniqueCountries(data) {
-        const uniqueCountries = []; //store unique countries
-        data.forEach(row => {
-          if (row["Country"]) { //if country exists
-            //split by comma, trim and add to unique countries[]
-            const countries = row["Country"].split(",").map(country => country.trim());
-            countries.forEach(country => { //loop through countries
-              if (!uniqueCountries.includes(country)) {//if country not in unique countries
-                uniqueCountries.push(country);//add to unique countries
-              }
-            });
-          }
-        });
-        return uniqueCountries; //return unique countries[data]
-
-        // Array.prototype.forEach(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
-        // String.prototype.split(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split
-        // Array.prototype.map(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
-        // Array.prototype.includes(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes
-      }
-
-
-      /* ###### Create country dropdown ###### */
-      function setCountryDropdown(countries) { //pass uniqueCountries
-        const countrySelect = $('.form-select').empty();//empty <select>
-        //add default option
-        countrySelect.append('<option selected>Filter by Country</option>');
-        countries.sort(); //sort countries alphabetically
-        countries.forEach(country => { //loop through countries...
-          //...and add to <select>
-          countrySelect.append(`<option value="${country}">${country}</option>`);
-
-          // jQuery .empty(): https://api.jquery.com/empty/
-          // jQuery .append(): https://api.jquery.com/append/
-          // Array.prototype.sort(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
-        });
-      }
-
-
-      /* ###### Create snakes datalist ###### */
-      function setDatalist(snakes) { //pass snake names
-        //empty datalist(in case of previous data)
-        const datalist = $('#datalistOptions').empty();
-        snakes.sort(); //sort snake names alphabetically
-        snakes.forEach(snake => { //loop through snake names...
-          //...and add to datalist
-          datalist.append(`<option value="${snake}"></option>`);
-        });
-      }
 
 
       /* ###### Process excel data ###### */
@@ -260,10 +143,7 @@
           else {
             row["Color"] = `${row["Color"]} (<span style='font-size: 1rem;'>No info</span>)`;
           }
-
-
           /* ###### eluminate duplicates block ###### */
-
           //loop through each row keys/values
           $.each(row, function (key, value) {
             //skip if:
@@ -274,38 +154,61 @@
             if (!value || key === "Species" || excludedColumns.includes(key) || value.toLowerCase() === "null") return;
 
             const trimmedValue = value.toString().trim();
-            const group = snakesData[species][key] = snakesData[species][key] || [];//
+            const group = snakesData[species][key] = snakesData[species][key] || [];//add key to species data or create empty array
             if (!group.includes(trimmedValue)) group.push(trimmedValue);
-
-            // Object.entries: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
           });
         });
 
-        const uniqueCountries = getUniqueCountries(data); //get unique countries
-        setCountryDropdown(uniqueCountries); //country dropdown
-        const snakeNames = Object.keys(snakesData); // Create datalist with snake names
-        setDatalist(snakeNames); //snake names datalist
-        displayAccordion(snakesData); //show data in accordion
-        filterByCountry(snakesData); //show/hide accordion items based on country
-        filterBySnakeName(snakesData); //show/hide accordion items based on snake name
-
-        // Object.entries: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
+        const uniqueCountries = getUniqueCountries(data);
+        const snakeNames = Object.keys(snakesData);
+        /* method returns an array of all the property names (keys) 
+        of the snakesData object. 
+        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys */
+        setCountryDropdown(uniqueCountries);
+        setDatalist(snakeNames);
+        displayAccordion(snakesData);
+        filterByCountry(snakesData);
+        filterBySnakeName(snakesData);
+        addColorFilter(snakesData);
       }
 
+      /* ###### Add Filtering by Color ###### */
+      function addColorFilter(data) {
+        $('#color1, #color2').on('change', function () {
+          const selectedColor1 = $('#color1').val()?.toLowerCase().trim();
+          const selectedColor2 = $('#color2').val()?.toLowerCase().trim();
+          /* ?.(chaining):
+          Before calling .toLowerCase(), (?.)makes sure that value is not null or
+          undefined. If val() returns null or undefined, the entire expression 
+          evaluates to undefined without throwing an error. */
 
+          const filteredData = {};
+          $.each(data, (species, details) => {
+            //Loops through the data object where each key (species) is snake species, (details) its attributes.
+            //https://api.jquery.com/jQuery.each/
+            const colors = details["Color"] ? details["Color"].toString().toLowerCase().split(',').map(color => color.trim()) : [];
+            if (
+              (!selectedColor1 || colors.includes(selectedColor1)) &&
+              (!selectedColor2 || colors.includes(selectedColor2))
+            ) {
+              filteredData[species] = details;
+            }
+          });
+
+          displayAccordion(filteredData); //updates accordion with filtered data
+        });
+      }
 
       /* ###### Display accordion ###### */
       function displayAccordion(data) {
-        //empty accordion
         const accordion = $('#accordionFlushExample').empty();
-        let index = 0; //accordion item index
+        let index = 0; //item index
         $.each(data, function (species, details) { //loop through data...
           index++;
           //accordion id
           const accordionId = `flush-collapse${index}`;
           const headerId = `flush-heading${index}`;
-
-          //accordion template literal
+          //template literal
           const accordionItem = `
             <div class="accordion-item">
               <h2 class="accordion-header" id="${headerId}">
@@ -325,206 +228,25 @@
               </div>
             </div>
           `;
-
-          accordion.append(accordionItem); //add accordion item to accordion
-
-          // jQuery.each(): https://api.jquery.com/jquery.each/
-          // Template Literals: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
-          // jQuery.empty(): https://api.jquery.com/empty/
-          // jQuery.append(): https://api.jquery.com/append/
+          accordion.append(accordionItem); //add template to accordion
         });
       }
-
-
-      /* ###### Generate details list ###### */
-      function generateDetailsList(details) {
-        let html = "";
-
-        //loop through each key/value
-        $.each(details, function (key, values) {
-          //format values
-          const formattedValues = values.map(value => {
-            //split by comma, trim
-            const items = value.split(",").map(item => item.trim());
-            const cleanedItems = items.map(item => {
-              //split by space to read each word
-              const words = item.split(" ").map(word => {
-                if (word.startsWith("(")) {//if word starts with "("...
-                  //...capitalize second letter and convert the rest to lowercase
-                  return `(${word.charAt(1).toUpperCase()}${word.slice(2).toLowerCase()}`;
-                }
-                //otherwise, capitalize first letter and convert the rest to lowercase
-                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-              });
-              return words.join(" ");//join words using space
-            });
-            return cleanedItems.join(", ");//join with comma
-
-            // String.split(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split
-            // Array.map(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
-
-          });
-
-          //if key = color
-          if (key === "Color") {
-            //add header for color variations
-            html += `<div style='text-align: center; font-weight: bold; margin-bottom: 10px;'>Color Variations:</div>`;
-            //shows first 3 colors(lines)...
-            const initialColors = formattedValues.slice(0, 3).map(value => `<div>${value}</div>`).join("<hr>");
-            //...and the rest(lines)
-            const additionalColors = formattedValues.slice(3).map(value => `<div>${value}</div>`).join("<hr>");
-
-            if (formattedValues.length > 3) {
-              //toggle button(colors)
-              html += `
-                    <div class="color-details">
-                        ${initialColors}
-                        <div class="additional-colors" style="display: none;">
-                            ${additionalColors}
-                        </div>
-                        <button class="btn btn-link toggle-more">Show More</button>
-                    </div>
-                `;
-            }
-            else { //hides button if > 3 colors
-              html += `<div class="color-details">${initialColors}</div>`;
-            }
-          }
-          else {
-            //if/else for codee name
-            let separator;
-            if (key === "Coder (Name)") {
-              separator = ", ";
-            }
-            else {
-              separator = "<strong> | </strong>";
-            }
-            html += `<div><strong>${key}:</strong> ${formattedValues.join(separator)}</div>`;
-          }
-        });
-
-        return html; //completed HTML
-      }
-      /* ###### Generate details list(toggle) ######*/
-      $(document).on("click", ".toggle-more", function () {
-        //get closest element ("color-details")
-        const parent = $(this).closest(".color-details");
-        //if additional colors are visible...
-        const additionalSection = parent.find(".additional-colors");
-        const isVisible = additionalSection.is(":visible");
-
-        additionalSection.toggle(); //toggle additional colors
-        $(this).text(isVisible ? "Show More" : "Show Less"); //change button text
-
-        // jQuery.closest(): https://api.jquery.com/closest/
-        // jQuery.find(): https://api.jquery.com/find/
-        // jQuery.toggle(): https://api.jquery.com/toggle/
-        // jQuery.text(): https://api.jquery.com/text/
-        // :visible Selector: https://api.jquery.com/visible-selector/
-        // this vs $(this): https://www.geeksforgeeks.org/difference-between-this-and-this-in-jquery/
-      });
-
-
-      /* ###### Filter by country ###### */
-      function filterByCountry(data) {
-        $('.form-select').on('change', function () {
-          const selectedCountry = $(this).val(); //get selected country
-          const accordion = $('#accordionFlushExample'); //get accordion
-          //if default option selected, show all accordion items
-          if (selectedCountry === "Filter by Country") {
-            accordion.children().show();
-            return; //stop
-          }
-
-          accordion.children().each(function () { //loop through accordion items...
-            //...get species name
-            const species = $(this).find('.accordion-header button').text().trim();
-            //if species exists in data...
-            const details = data[species];
-            let matches = false; //track if country matches
-
-            //loop through details
-            $.each(details, function (key, values) {
-              //some() method checks if any value in the species details array contains the selected country.
-              //if key is "Country" and values include selected country
-              if (values.some(value => value.includes(selectedCountry))) {
-                matches = true; //set matches to true if country found
-              }
-            });
-
-            if (matches) { //if matches found, show accordion item
-              $(this).show();
-            }
-            else { //else, hide accordion item
-              $(this).hide();
-            }
-
-            // jQuery.on(): https://api.jquery.com/on/
-            // jQuery.val(): https://api.jquery.com/val/
-            // jQuery.find(): https://api.jquery.com/find/
-            // jQuery.text(): https://api.jquery.com/text/
-            // jQuery.trim(): https://api.jquery.com/jQuery.trim/
-            // jQuery.each(): https://api.jquery.com/jquery.each/
-            // Array.prototype.some(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some
-            // Array.prototype.includes(): https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes
-            // jQuery.show(): https://api.jquery.com/show/
-            // jQuery.hide(): https://api.jquery.com/hide/
-          });
-        });
-      }
-
-
-      /* ###### Filter by snake name ###### */
-      function filterBySnakeName(data) {
-        $('#exampleDataList').on('input', function () {
-          //get input trimmed and Lowercased
-          const selectedSnake = $(this).val().trim().toLowerCase();
-          const accordion = $('#accordionFlushExample');
-
-          //selects all child elements of the accordion container (e.g., all accordion items).
-          accordion.children().each(function () {
-            const species = $(this).find('.accordion-header button').text().trim().toLowerCase();
-            if (species === selectedSnake) {
-              $(this).show();
-            }
-            else {
-              $(this).hide();
-            }
-          });
-        });
-      }
-
-
-      /* ###### Reset filters ###### */
-      $('#reset-button').on('click', function () {
-        $('#exampleDataList').val(''); //clear datalist input
-        $('.form-select').val('Filter by Country'); //reset select dropdown
-        $('#accordionFlushExample').children().show(); //show all accordion items
-        //close all(open) accordion items
-        $('#accordionFlushExample .accordion-collapse').removeClass('show');
-      });
-    });
-
-    $(document).ready(function () {
-      const countrySelect = $('.form-select');
-      const snakeInput = $('#exampleDataList');
-
-      //when changing the country dropdown, reset the snake name input field
-      countrySelect.on('change', function () {
-        snakeInput.val(''); //clear snake input field
-      });
-
-      //when typing in the snake name input field, reset the country dropdown
-      snakeInput.on('input', function () {
-        countrySelect.val('Filter by Country'); //reset country dropdown
-      });
-
-      // jQuery.val(): https://api.jquery.com/val/
-      // jQuery.on(): https://api.jquery.com/on/
-      // jQuery.show(): https://api.jquery.com/show/
     });
   </script>
 
+  <!-- reset script -->
+  <script>
+    $(document).ready(function () {
+      $('#reset-button').on('click', function () {
+        //clear all fields
+        $('input[type="text"], input[type="search"]').val('');
+        $('datalist').empty();
+        $('select').prop('selectedIndex', 0);
+      });
+    });
+  </script>
+
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
