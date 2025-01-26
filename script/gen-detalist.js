@@ -1,86 +1,113 @@
-/* ###### Generate details list ###### */
 function generateDetailsList(details) {
-  let html = "";
-  //loop through each key/value
+  var html = ""; //just a var:)
+
   $.each(details, function (key, values) {
-    //format values
-    const formattedValues = values.map((value) => {
-      //split by comma, trim
-      const items = value.split(",").map((item) => item.trim());
-      const cleanedItems = items.map((item) => {
-        //split by space to read each word
-        const words = item.split(" ").map((word) => {
-          if (word.startsWith("(")) {
-            //if word starts with "("...
-            //...capitalize second letter and convert the rest to lowercase
-            return `(${word.charAt(1).toUpperCase()}${word
-              .slice(2)
-              .toLowerCase()}`;
-          }
-          //otherwise, capitalize first letter and convert the rest to lowercase
-          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        });
-        return words.join(" "); //join words using space
-      });
-      return cleanedItems.join(", "); //join with comma
-    });
-
-    /* ###### Generate color variations ###### */
-    //if key = color
     if (key === "Color") {
-      //add header for color variations
-      html += `<div style='text-align: center; font-weight: bold; margin-bottom: 10px;'>Color Variations:</div>`;
-      //shows first 3 colors(lines)...
-      const initialColors = formattedValues
-        .slice(0, 3)
-        .map((value) => `<div>${value}</div>`)
-        .join("<hr>");
-      //...and the rest(lines)
-      const additionalColors = formattedValues
-        .slice(3)
-        .map((value) => `<div>${value}</div>`)
-        .join("<hr>");
+      //header for additional info
+      html +=
+        "<div style='text-align: center; font-weight: bold; margin-bottom: 10px;'>Additional Info:</div>";
 
-      if (formattedValues.length > 3) {
-        //toggle button(colors)
-        html += `
-                    <div class="color-details">
-                        ${initialColors}
-                        <hr>
-                        <div class="additional-colors" style="display: none;">
-                            ${additionalColors}
-                        </div>
-                        <button class="btn btn-link toggle-more">Show More</button>
-                    </div>
-                `;
-      } else {
-        //hides button if > 3 colors
-        html += `<div class="color-details">${initialColors}</div>`;
+      //format colors and details
+      function formatDetails(value) {
+        var colors, details;
+
+        //if contains "(" -> split
+        if (value.includes("(")) {
+          var parts = value.split("(").map(function (part) {
+            return part.trim(); //trim each part
+          });
+          colors = parts[0]; // First part - colors
+          details = parts[1]; // Second part - details
+        } 
+        else {
+          colors = value.trim(); //treat as colors
+          details = ""; //nothing for details
+        }
+
+        //format colors (assuming capitalization is already handled in processExcelData)
+        var formattedColors = colors
+          .split(",")
+          .map(function (color) {
+            return color.trim(); //
+          })
+          .join(", ")
+          .replace(/,\s*$/, ""); //remove trailing...
+
+        //format additional details
+        var formattedDetails = details
+        //if details exist, format them
+          ? details
+              .replace(")", "") //remove trailing ")"
+              .split("|") // Split into individual details
+              .map(function (item) {
+                return (
+                  '<div style="margin-left: 20px;">' + item.trim() + "</div>"
+                );
+              })
+              .join("") //join all
+          //else, return empty string
+          : "";
+
+        //combine colors and details
+        return (
+          '<div class="color-item"><div>' +
+          formattedColors +
+          "</div>" +
+          formattedDetails +
+          "</div>"
+        );
       }
-    } else {
-      //if/else for codee name
-      let separator;
-      if (key === "Coder (Name)") {
-        separator = ", ";
-      } else {
-        separator = "<strong> | </strong>";
+
+      //combine first 3 colors and additional colors
+      var initialColors = values.slice(0, 3).map(formatDetails).join("<hr>");
+      var extraColors = values.slice(3).map(formatDetails).join("<hr>");
+
+      html +=
+        '<div class="color-details">' +
+        initialColors +
+        (extraColors
+          ? '<hr><div class="additional-colors" style="display: none;">' +
+            extraColors +
+            "</div>"
+          : "") +
+        (extraColors
+          ? '<button class="btn btn-link toggle-more">Show More</button>'
+          : "") +
+        "</div>";
+    }
+
+    //handle countries
+    if (key === "Country") {
+      html +=
+        "<div style='text-align: center; font-weight: bold; margin-bottom: 10px;'>Countries:</div>";
+
+      //combine and split countries
+      var allCountries = values.join(",").split(",");
+      var uniqueCountries = [];
+
+      //remove duplicates and trim each country
+      for (var i = 0; i < allCountries.length; i++) {
+        var country = allCountries[i].trim(); //remove extra spaces
+        uniqueCountries.push(country); //add to the list
       }
-      html += `<div><strong>${key}:</strong> ${formattedValues.join(
-        separator
-      )}</div>`;
+      uniqueCountries.sort();//sort alphabetically
+
+      //string of countries separated by ", "
+      var countriesString = uniqueCountries.join(", ");
+
+      html += "<div class='country-details'>" + countriesString + "</div>";
     }
   });
 
-  return html; //completed HTML
+  return html; //return combined html
 }
-/* ###### Generate details list(toggle) ######*/
-$(document).on("click", ".toggle-more", function () {
-  //get closest element ("color-details")
-  const parent = $(this).closest(".color-details");
-  //if additional colors are visible...
-  const additionalSection = parent.find(".additional-colors");
-  const isVisible = additionalSection.is(":visible");
 
-  additionalSection.toggle(); //toggle additional colors
-  $(this).text(isVisible ? "Show More" : "Show Less"); //change button text
+/* ###### Toggle show/hide more colors ###### */
+$(document).on("click", ".toggle-more", function () {
+  var additionalSection = $(this)
+    .closest(".color-details")//find the closest parent with class "color-details"
+    .find(".additional-colors");//search within the parent for class "additional-colors"
+  var isVisible = additionalSection.is(":visible");//check if the section is visible
+  additionalSection.toggle();//toggle visibility
+  $(this).text(isVisible ? "Show More" : "Show Less");//update button text
 });

@@ -1,41 +1,3 @@
-/* ###### Filter by country ###### */
-function filterByCountry(data) {
-  $(".country-select").on("change", function () {
-    const selectedCountry = $(this).val(); //get country value
-    const accordion = $("#accordionFlushExample");
-    //show all if default value selected
-    if (selectedCountry === "Filter by Country") {
-      accordion.children().show();
-      return; //stop!!!
-    }
-
-    accordion.children().each(function () {
-      //loop through...
-      //...get species name
-      const species = $(this).find(".accordion-header button").text().trim();
-      //if species exists in data...
-      const details = data[species];
-      let matches = false; //track if country matches
-
-      //loop through details
-      $.each(details, function (key, values) {
-        //some() method checks if any value in the species details array contains the selected country.
-        //https://www.w3schools.com/jsref/jsref_some.asp
-        //if key is "Country" and values include selected country
-        if (values.some((value) => value.includes(selectedCountry))) {
-          matches = true; //set matches to true if country found
-        }
-      });
-
-      if (matches) {
-        $(this).show();
-      } else {
-        $(this).hide();
-      }
-    });
-  });
-}
-
 /* ###### Filter by snake name ###### */
 function filterBySnakeName(data) {
   $("#exampleDataList").on("input", function () {
@@ -43,11 +5,12 @@ function filterBySnakeName(data) {
     const selectedSnake = $(this).val().trim().toLowerCase();
     const accordion = $("#accordionFlushExample");
 
-    //selects all child elements of the accordion container (e.g., all accordion items).
+    //go through each child element of the accordion container(e.g. accordion items)
     accordion.children().each(function () {
+      //get`Species` name (accordion title)
       const species = $(this)
-        .find(".accordion-header button") //find the button element
-        .text() //get the text content
+        .find(".accordion-header button")
+        .text()
         .trim()
         .toLowerCase();
       if (species === selectedSnake) {
@@ -57,4 +20,57 @@ function filterBySnakeName(data) {
       }
     });
   });
+}
+
+/* ###### Filter Data by Country ###### */
+// function filterByCountry(data, selectedCountry) {
+//   return data.filter((row) => {
+//     if (row["Country"]) {
+//       const countries = row["Country"].split(",").map((c) => c.trim());
+//       return countries.includes(selectedCountry); // Keep rows with matching country
+//     }
+//     return false; // Exclude rows without a "Country" field
+//   });
+// }
+
+function filterByCountry(data, selectedCountry) {
+  const filteredData = []; // matching data list
+
+  $.each(data, function (index, row) {
+    if (row["Country"]) {
+      //check if "Country" exists
+      const countries = row["Country"].split(","); //splits into array
+      const trimmedCountries = [];
+
+      $.each(countries, function (i, c) {
+        trimmedCountries.push($.trim(c));
+      });
+
+      if (trimmedCountries.includes(selectedCountry)) {
+        filteredData.push(row); //add to the list
+      }
+    }
+  });
+  return filteredData;
+}
+
+/* ###### Filter Data by Color ###### */
+function filterByColor(data, selectedColor) {
+  const filteredData = [];
+  $.each(data, function (index, row) {
+    if (row["Color"]) {
+      const colors = row["Color"].split(",");
+      const trimmedColors = [];
+
+      $.each(colors, function (i, c) {
+        trimmedColors.push($.trim(c.toLowerCase()));
+      });
+
+      if (trimmedColors.includes(selectedColor.toLowerCase())) {
+        filteredData.push(row); //add matching row
+      }
+    }
+  });
+
+  return filteredData; //return filtered data
 }
