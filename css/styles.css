@@ -108,7 +108,6 @@ footer img {
 
 .accordion-item {
   border: none;
-  /* Remove default borders */
 }
 
 .accordion-button {
@@ -120,7 +119,6 @@ footer img {
 
 .accordion-button:focus {
   box-shadow: none;
-  /* Remove focus outline */
 }
 
 .accordion-button:not(.collapsed) {
@@ -168,3 +166,41 @@ hr {
   gap: 4px;
   margin-top: 10px;
 }
+
+.mt-4{
+  margin-top: .5rem !important
+}
+
+/* styles for the color select component */
+strong {
+  text-transform: capitalize;
+}
+
+.color-details {
+  text-transform: capitalize;
+}
+
+/* styles for the color select component */
+.color-select-container, .related-color-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.color-btn, .related-color-btn {
+  font-size: 12px;
+  padding: 2px 2px;
+  border-radius: 6px;
+  text-transform: capitalize;
+  color: black;
+  font-weight: bold;
+}
+
+.color-btn:hover, .related-color-btn:hover {
+  background-color: #198754;
+  color: white;
+}
+
+
